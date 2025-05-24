@@ -1,18 +1,32 @@
-app.post('/callback', (req, res) => {
-  const data = req.body;
-  const stkCallback = data.Body.stkCallback;
+const express = require('express');
+const fetch = require('node-fetch');
+const app = express();
 
-  if (stkCallback.ResultCode === 0) {
-    const metadata = stkCallback.CallbackMetadata;
-    const mpesaReceipt = metadata.Item.find(i => i.Name === "MpesaReceiptNumber").Value;
-    const amount = metadata.Item.find(i => i.Name === "Amount").Value;
-    const phone = metadata.Item.find(i => i.Name === "PhoneNumber").Value;
+app.use(express.json());
 
-    console.log(`Payment success: ${amount} from ${phone}, Receipt: ${mpesaReceipt}`);
-    // Save to DB here (optional)
-  } else {
-    console.log(`Payment failed with code: ${stkCallback.ResultCode}`);
+const PAYSTACK_SECRET_KEY = 'sk_live_xxxxxxxxxxxxx'; // replace with your real secret key
+
+app.post('/verify-payment', async (req, res) => {
+  const reference = req.body.reference;
+
+  try {
+    const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.status && data.data.status === 'success') {
+      // Payment was successful
+      res.json({ status: true, message: 'Payment verified successfully' });
+    } else {
+      res.json({ status: false, message: 'Payment verification failed' });
+    }
+  } catch (error) {
+    res.status(500).json({ status: false, message: 'Server error', error });
   }
-
-  res.sendStatus(200);
 });

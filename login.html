@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - GetCash</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #1e1e2f;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      width: 320px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #00c853;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      width: 100%;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #00b44a;
+    }
+    .link {
+      display: block;
+      text-align: center;
+      color: #90caf9;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login to GetCash</h2>
+
+    <h4>Email Login</h4>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <span class="link" onclick="resetPassword()">Forgot Password?</span>
+
+    <hr style="margin: 20px 0; border: 1px solid #333;" />
+
+    <h4>Phone Login</h4>
+    <input type="text" id="phone" placeholder="+2547XXXXXXXX" />
+    <div id="recaptcha-container"></div>
+    <button onclick="sendOTP()">Send OTP</button>
+    <input type="text" id="otp" placeholder="Enter OTP" />
+    <button onclick="verifyOTP()">Verify OTP</button>
+
+    <a class="link" href="register.html">Don't have an account? Register</a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyBALQbymrEdEgpNF8uM0zJKhpPyIebHWq0",
+  authDomain: "elyte-5983.firebaseapp.com",
+  projectId: "elyte-5983",
+  storageBucket: "elyte-5983.firebasestorage.app",
+  messagingSenderId: "134369990574",
+  appId: "1:134369990574:web:28a5b36881e6fe3a681a3f",
+  measurementId: "G-NR5WV9RBXV"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.login = async function () {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Login successful!");
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        alert("Login failed: " + error.message);
+      }
+    };
+
+    window.resetPassword = async function () {
+      const email = document.getElementById("email").value;
+      if (!email) {
+        alert("Please enter your email.");
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert("Password reset email sent!");
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
+    };
+
+    let confirmationResult;
+    window.sendOTP = async function () {
+      const phoneNumber = document.getElementById("phone").value;
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible'
+        });
+      }
+      try {
+        confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+        alert("OTP sent!");
+      } catch (error) {
+        alert("Failed to send OTP: " + error.message);
+      }
+    };
+
+    window.verifyOTP = async function () {
+      const otp = document.getElementById("otp").value;
+      try {
+        await confirmationResult.confirm(otp);
+        alert("Phone login successful!");
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        alert("OTP verification failed: " + error.message);
+      }
+    };
+  </script>
+</body>
+</html>

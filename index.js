@@ -1,25 +1,33 @@
-const express = require('express');
-const bodyParser = require('body-parser');
+const payWithPaystack = () => {
+  const handler = PaystackPop.setup({
+    key: 'pk_live_170d64a2ef9a487becb9e3e7e892c7f9fd3b0306', // Your live public key
+    email: 'dicksonmutinda06@gmail.com',
+    amount: 100, // KES 1 = 100 kobo
+    currency: 'KES',
+    callback: function (response) {
+      // Send reference to backend for verification
+      fetch('http://localhost:5000/verify-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reference: response.reference }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === true) {
+            alert('Payment successful and verified!');
+          } else {
+            alert('Payment verification failed.');
+          }
+        });
+    },
+    onClose: function () {
+      alert('Transaction was not completed.');
+    },
+  });
 
-const app = express();
-app.use(bodyParser.json());
+  handler.openIframe();
+};
 
-const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.send('Getcash M-PESA Backend is running');
-});
-
-app.post('/confirmation', (req, res) => {
-  console.log('Confirmation Received:', req.body);
-  res.sendStatus(200);
-});
-
-app.post('/validation', (req, res) => {
-  console.log('Validation Received:', req.body);
-  res.sendStatus(200);
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+document.getElementById('pay-btn').addEventListener('click', payWithPaystack);
